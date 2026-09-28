@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StudyFlow — Study Time Tracker</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#121a2e; --panel2:#18223a; --text:#f7f9ff; --muted:#9aa7bd;
+  --accent:#7c8cff; --accent2:#8ef0c3; --danger:#ff718e; --warn:#ffd36e;
+  --line:rgba(255,255,255,.08); --shadow:0 16px 40px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(124,140,255,.18), transparent 28%),
+    radial-gradient(circle at 90% 5%, rgba(142,240,195,.10), transparent 24%),
+    var(--bg);
+  color:var(--text); min-height:100vh;
+}
+button,input{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1180px;margin:0 auto;padding:28px 18px 70px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
+.brand h1{margin:0;font-size:clamp(30px,5vw,48px);letter-spacing:-1.8px}
+.brand p{margin:6px 0 0;color:var(--muted)}
+.datepill{background:rgba(255,255,255,.05);border:1px solid var(--line);padding:10px 14px;border-radius:16px;color:var(--muted);white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow)}
+.summary{grid-column:span 4;padding:20px}
+.summary .label{font-size:13px;color:var(--muted);margin-bottom:8px}
+.summary .value{font-size:30px;font-weight:800;letter-spacing:-1px}
+.summary .sub{font-size:12px;color:var(--muted);margin-top:7px}
+.active{grid-column:span 12;padding:22px;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.active-left{min-width:260px}
+.kicker{font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-weight:700}
+.active-subject{font-size:24px;font-weight:800;margin-top:6px}
+.timer{font-size:clamp(38px,8vw,72px);font-weight:900;letter-spacing:-3px;font-variant-numeric:tabular-nums}
+.status{display:inline-flex;align-items:center;gap:8px;color:var(--accent2);font-weight:700;margin-top:6px}
+.dot{width:9px;height:9px;border-radius:99px;background:currentColor;box-shadow:0 0 0 5px rgba(142,240,195,.08)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:800;color:var(--text);background:var(--panel2)}
+.btn.primary{background:var(--accent);color:white}
+.btn.break{background:var(--warn);color:#2b2412}
+.btn.stop{background:var(--danger);color:white}
+.btn.ghost{border:1px solid var(--line);background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.section{grid-column:span 12;padding:22px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.section h2{margin:0;font-size:20px}
+.subjects{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.subject{padding:16px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid var(--line);display:flex;flex-direction:column;gap:14px;min-height:154px}
+.subject.running{outline:2px solid var(--accent);background:rgba(124,140,255,.09)}
+.subject-top{display:flex;justify-content:space-between;gap:10px}
+.subject-name{font-weight:800;line-height:1.25}
+.small{font-size:12px;color:var(--muted)}
+.progress{height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px}
+.subject-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
+.hours{font-size:13px;color:var(--muted)}
+.split{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;grid-column:span 12}
+.panel{padding:22px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:transparent;color:var(--muted);padding:8px 12px;border-radius:999px}
+.tab.active{background:var(--text);color:#0b1020;border-color:transparent;font-weight:800}
+.breakdown{display:flex;flex-direction:column;gap:12px}
+.row{display:grid;grid-template-columns:minmax(130px,1fr) 2fr auto;gap:12px;align-items:center}
+.bar{height:9px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--accent);border-radius:99px}
+.row strong{font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.history{display:flex;flex-direction:column;gap:8px;max-height:390px;overflow:auto;padding-right:4px}
+.history-item{padding:12px 13px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}
+.history-main{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.history-meta{font-size:12px;color:var(--muted);margin-top:5px;display:flex;gap:12px;flex-wrap:wrap}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px}
+.footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.modal-wrap.show{display:flex}
+.modal{width:min(480px,100%);background:#10182b;border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow)}
+.modal h3{margin:0 0 16px;font-size:22px}
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.field label{font-size:12px;color:var(--muted);font-weight:700}
+.field input{border:1px solid var(--line);background:#0b1222;color:var(--text);border-radius:14px;padding:12px 13px;outline:none}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}
+@media(max-width:850px){
+  .summary{grid-column:span 12}
+  .subjects{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .split{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .topbar{flex-direction:column}
+  .subjects{grid-template-columns:1fr}
+  .summary{grid-column:span 12}
+  .active{align-items:flex-start}
+  .timer{font-size:48px}
+  .row{grid-template-columns:1fr auto}
+  .row .bar{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <h1>StudyFlow</h1>
+      <p>One click to study. No limits. Breaks don’t count. Everything else is automatic.</p>
+    </div>
+    <div class="datepill" id="todayLabel"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card summary"><div class="label">TODAY</div><div class="value" id="todayTotal">0h 00m</div><div class="sub">Focused study time</div></div>
+    <div class="card summary"><div class="label">THIS WEEK</div><div class="value" id="weekTotal">0h 00m</div><div class="sub">Monday → Sunday</div></div>
+    <div class="card summary"><div class="label">THIS MONTH</div><div class="value" id="monthTotal">0h 00m</div><div class="sub">All completed sessions</div></div>
+
+    <div class="card active">
+      <div class="active-left">
+        <div class="kicker">Current session</div>
+        <div class="active-subject" id="activeSubject">No active study session</div>
+        <div class="status" id="statusLine" style="color:var(--muted)"><span class="dot"></span><span>Choose a subject and press Start</span></div>
+      </div>
+      <div class="timer" id="timer">00:00:00</div>
+      <div class="actions">
+        <button class="btn break" id="pauseBtn" disabled>Break</button>
+        <button class="btn primary" id="resumeBtn" style="display:none">Resume</button>
+        <button class="btn stop" id="stopBtn" disabled>Stop & Save</button>
+      </div>
+    </div>
+
+    <section class="card section">
+      <div class="section-head">
+        <div>
+          <h2>Subjects</h2>
+          <div class="small">Press Start — no time entry needed.</div>
+        </div>
+        <button class="btn ghost" id="addSubjectBtn">+ Add subject</button>
+      </div>
+      <div class="subjects" id="subjectsGrid"></div>
+    </section>
+
+    <div class="split">
+      <section class="card panel">
+        <div class="section-head">
+          <div>
+            <h2>Subject breakdown</h2>
+            <div class="small">Study time only; breaks are excluded.</div>
+          </div>
+          <div class="tabs">
+            <button class="tab active" data-range="week">Week</button>
+            <button class="tab" data-range="month">Month</button>
+            <button class="tab" data-range="all">All</button>
+          </div>
+        </div>
+        <div class="breakdown" id="breakdown"></div>
+      </section>
+
+      <section class="card panel">
+        <div class="section-head">
+          <div>
+            <h2>Recent sessions</h2>
+            <div class="small">Date and times are saved automatically.</div>
+          </div>
+        </div>
+        <div class="history" id="history"></div>
+        <div class="footer-actions">
+          <button class="btn ghost" id="exportBtn">Export CSV</button>
+          
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="subjectModal">
+  <div class="modal">
+    <h3>Add a new subject</h3>
+    <div class="field">
+      <label>Subject / course name</label>
+      <input id="newSubjectName" placeholder="e.g. German Language" maxlength="60" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" data-close="subjectModal">Cancel</button>
+      <button class="btn primary" id="saveSubjectBtn">Add subject</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+const STORE_KEY = "studyflow_v1";
+const DEFAULT_SUBJECTS = [
+  {id:"signal", name:"Signal Systems", target:0},
+  {id:"embedded", name:"Embedded Systems", target:0},
+  {id:"communication", name:"Communication Systems", target:0},
+  {id:"software", name:"Software Engineering", target:0},
+  {id:"driving", name:"Driving Licence", target:0},
+  {id:"online", name:"Online Earning Course", target:0},
+  {id:"ai", name:"AI Engineering Course", target:0}
+];
+
+let state = loadState();
+let selectedRange = "week";
+let tickHandle = null;
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      s.subjects ??= DEFAULT_SUBJECTS;
+      s.sessions ??= [];
+      s.active ??= null;
+      if(s.active && s.active.status === "running"){
+        const now = Date.now();
+        s.active.studyMs += Math.max(0, now - s.active.lastTs);
+        s.active.lastTs = now;
+      } else if(s.active && s.active.status === "paused"){
+        const now = Date.now();
+        s.active.breakMs += Math.max(0, now - s.active.lastTs);
+        s.active.lastTs = now;
+      }
+      return s;
+    }
+  }catch(e){}
+  return {subjects: DEFAULT_SUBJECTS, sessions:[], active:null};
+}
+function saveState(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+function fmt(ms, seconds=false){
+  const total = Math.max(0, Math.floor(ms/1000));
+  const h = Math.floor(total/3600);
+  const m = Math.floor((total%3600)/60);
+  const s = total%60;
+  if(seconds) return [h,m,s].map((v,i)=>String(v).padStart(2,"0")).join(":");
+  return `${h}h ${String(m).padStart(2,"0")}m`;
+}
+function fmtClock(ts){
+  return new Date(ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+}
+function dayStart(d=new Date()){ const x=new Date(d); x.setHours(0,0,0,0); return x.getTime(); }
+function weekStart(d=new Date()){
+  const x=new Date(d); x.setHours(0,0,0,0);
+  const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x.getTime();
+}
+function monthStart(d=new Date()){ return new Date(d.getFullYear(),d.getMonth(),1).getTime(); }
+function inRange(session, range){
+  if(!session.endedAt) return false;
+  if(range==="all") return true;
+  const start = range==="week" ? weekStart() : monthStart();
+  return session.endedAt >= start;
+}
+function sumSessions(filterFn){
+  return state.sessions.filter(filterFn).reduce((a,s)=>a+s.studyMs,0);
+}
+function liveStudyMs(){
+  if(!state.active) return 0;
+  let ms=state.active.studyMs;
+  if(state.active.status==="running") ms += Math.max(0, Date.now()-state.active.lastTs);
+  return ms;
+}
+function subjectWeekMs(subjectId){
+  let ms=sumSessions(s=>s.subjectId===subjectId && s.endedAt>=weekStart());
+  if(state.active?.subjectId===subjectId) ms += liveStudyMs();
+  return ms;
+}
+function startSubject(id){
+  if(state.active){
+    if(state.active.subjectId===id && state.active.status==="paused") return resumeSession();
+    return alert("Stop the current session before starting another subject.");
+  }
+  state.active={subjectId:id, startedAt:Date.now(), lastTs:Date.now(), studyMs:0, breakMs:0, status:"running"};
+  saveState(); render(); startTicker();
+}
+function pauseSession(){
+  if(!state.active || state.active.status!=="running") return;
+  const now=Date.now();
+  state.active.studyMs += Math.max(0,now-state.active.lastTs);
+  state.active.lastTs=now; state.active.status="paused";
+  saveState(); render();
+}
+function resumeSession(){
+  if(!state.active || state.active.status!=="paused") return;
+  const now=Date.now();
+  state.active.breakMs += Math.max(0,now-state.active.lastTs);
+  state.active.lastTs=now; state.active.status="running";
+  saveState(); render();
+}
+function stopSession(){
+  if(!state.active) return;
+  const now=Date.now();
+  if(state.active.status==="running") state.active.studyMs += Math.max(0,now-state.active.lastTs);
+  else state.active.breakMs += Math.max(0,now-state.active.lastTs);
+  const a=state.active;
+  state.sessions.push({
+    id:"s_"+now+"_"+Math.random().toString(36).slice(2,7),
+    subjectId:a.subjectId, startedAt:a.startedAt, endedAt:now,
+    studyMs:a.studyMs, breakMs:a.breakMs
+  });
+  state.active=null; saveState(); render();
+}
+function subjectById(id){ return state.subjects.find(s=>s.id===id); }
+
+function render(){
+  const now=new Date();
+  document.getElementById("todayLabel").textContent = now.toLocaleDateString(undefined,{weekday:"long",day:"2-digit",month:"short",year:"numeric"});
+  const activeToday = state.active ? liveStudyMs() : 0;
+  document.getElementById("todayTotal").textContent = fmt(sumSessions(s=>s.endedAt>=dayStart()) + activeToday);
+  document.getElementById("weekTotal").textContent = fmt(sumSessions(s=>s.endedAt>=weekStart()) + activeToday);
+  document.getElementById("monthTotal").textContent = fmt(sumSessions(s=>s.endedAt>=monthStart()) + activeToday);
+
+  const a=state.active;
+  const activeSub=document.getElementById("activeSubject");
+  const status=document.getElementById("statusLine");
+  const pause=document.getElementById("pauseBtn");
+  const resume=document.getElementById("resumeBtn");
+  const stop=document.getElementById("stopBtn");
+  if(a){
+    activeSub.textContent=subjectById(a.subjectId)?.name || "Study session";
+    document.getElementById("timer").textContent=fmt(liveStudyMs(),true);
+    if(a.status==="running"){
+      status.style.color="var(--accent2)"; status.querySelector("span:last-child").textContent="Studying — timer is counting";
+      pause.disabled=false; pause.style.display="inline-block"; resume.style.display="none"; stop.disabled=false;
+    }else{
+      status.style.color="var(--warn)"; status.querySelector("span:last-child").textContent=`On break — ${fmt(currentBreakMs(),true)} break`;
+      pause.style.display="none"; resume.style.display="inline-block"; stop.disabled=false;
+    }
+  }else{
+    activeSub.textContent="No active study session";
+    document.getElementById("timer").textContent="00:00:00";
+    status.style.color="var(--muted)"; status.querySelector("span:last-child").textContent="Choose a subject and press Start";
+    pause.disabled=true; pause.style.display="inline-block"; resume.style.display="none"; stop.disabled=true;
+  }
+
+  const grid=document.getElementById("subjectsGrid"); grid.innerHTML="";
+  state.subjects.forEach(s=>{
+    const w=subjectWeekMs(s.id);
+    const el=document.createElement("div"); el.className="subject"+(a?.subjectId===s.id?" running":"");
+    el.innerHTML=`
+      <div class="subject-top"><div class="subject-name">${escapeHtml(s.name)}</div><div class="small">No limit</div></div>
+      <div><div class="small">This week: <strong style="color:var(--text)">${fmt(w)}</strong></div></div>
+      <div class="subject-bottom">
+        <span class="hours">Study as much as you want</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost delete-btn" data-delete-id="${s.id}" title="Delete subject">Delete</button>
+          <button class="btn primary start-btn" data-id="${s.id}" ${a && a.subjectId!==s.id ? "disabled":""}>${a?.subjectId===s.id ? (a.status==="paused"?"Resume":"Running") : "Start"}</button>
+        </div>
+      </div>`;
+    grid.appendChild(el);
+  });
+
+  renderBreakdown();
+  renderHistory();
+}
+function currentBreakMs(){
+  if(!state.active) return 0;
+  let ms=state.active.breakMs;
+  if(state.active.status==="paused") ms += Math.max(0,Date.now()-state.active.lastTs);
+  return ms;
+}
+function renderBreakdown(){
+  const wrap=document.getElementById("breakdown");
+  const values=state.subjects.map(s=>{
+    let ms=sumSessions(x=>x.subjectId===s.id && inRange(x,selectedRange));
+    if(state.active?.subjectId===s.id){
+      const start = selectedRange==="all" ? 0 : (selectedRange==="week"?weekStart():monthStart());
+      if(state.active.startedAt>=start) ms += liveStudyMs();
+    }
+    return {...s,ms};
+  }).sort((a,b)=>b.ms-a.ms);
+  const max=Math.max(1,...values.map(v=>v.ms));
+  if(values.every(v=>v.ms===0)){ wrap.innerHTML=`<div class="empty">No study time in this range yet.</div>`; return; }
+  wrap.innerHTML=values.map(v=>`
+    <div class="row">
+      <div class="small" style="color:var(--text);font-weight:700">${escapeHtml(v.name)}</div>
+      <div class="bar"><span style="width:${Math.round(v.ms/max*100)}%"></span></div>
+      <strong>${fmt(v.ms)}</strong>
+    </div>`).join("");
+}
+function renderHistory(){
+  const wrap=document.getElementById("history");
+  const items=[...state.sessions].sort((a,b)=>b.endedAt-a.endedAt).slice(0,12);
+  if(!items.length){ wrap.innerHTML=`<div class="empty">Your completed sessions will appear here.</div>`; return; }
+  wrap.innerHTML=items.map(s=>{
+    const sub=subjectById(s.subjectId);
+    const d=new Date(s.startedAt);
+    return `<div class="history-item">
+      <div class="history-main"><span>${escapeHtml(sub?.name||"Unknown subject")}</span><span>${fmt(s.studyMs)}</span></div>
+      <div class="history-meta"><span>${d.toLocaleDateString()}</span><span>${fmtClock(s.startedAt)}–${fmtClock(s.endedAt)}</span><span>Break ${fmt(s.breakMs)}</span></div>
+    </div>`;
+  }).join("");
+}
+function startTicker(){
+  clearInterval(tickHandle);
+  tickHandle=setInterval(()=>{
+    if(state.active){
+      document.getElementById("timer").textContent=fmt(liveStudyMs(),true);
+      if(state.active.status==="paused"){
+        document.querySelector("#statusLine span:last-child").textContent=`On break — ${fmt(currentBreakMs(),true)} break`;
+      }
+      if(Date.now()%5000<1000) saveState();
+    }
+  },1000);
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])); }
+function openModal(id){ document.getElementById(id).classList.add("show"); }
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+
+document.addEventListener("click",e=>{
+  const start=e.target.closest(".start-btn");
+  if(start && !start.disabled){
+    const id=start.dataset.id;
+    if(state.active?.subjectId===id){
+      if(state.active.status==="paused") resumeSession();
+    } else startSubject(id);
+  }
+  const del=e.target.closest(".delete-btn");
+  if(del){
+    const id=del.dataset.deleteId;
+    if(state.active?.subjectId===id){
+      alert("This subject is currently running. Stop the session first, then delete it.");
+      return;
+    }
+    const sub=subjectById(id);
+    const ok=confirm(`Delete "${sub?.name || "this subject"}"?\n\nOld completed sessions will stay in your history.`);
+    if(ok){
+      state.subjects=state.subjects.filter(s=>s.id!==id);
+      saveState();
+      render();
+    }
+  }
+  if(e.target.matches("[data-close]")) closeModal(e.target.dataset.close);
+});
+document.getElementById("pauseBtn").onclick=pauseSession;
+document.getElementById("resumeBtn").onclick=resumeSession;
+document.getElementById("stopBtn").onclick=stopSession;
+document.getElementById("addSubjectBtn").onclick=()=>openModal("subjectModal");
+document.getElementById("saveSubjectBtn").onclick=()=>{
+  const name=document.getElementById("newSubjectName").value.trim();
+  if(!name) return alert("Please enter a subject name.");
+  state.subjects.push({id:"sub_"+Date.now(),name,target:0});
+  saveState(); closeModal("subjectModal");
+  document.getElementById("newSubjectName").value="";
+  render();
+};
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  selectedRange=t.dataset.range;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
+  renderBreakdown();
+});
+
+document.getElementById("exportBtn").onclick=()=>{
+  const rows=[["Date","Subject","Start","End","Study Minutes","Break Minutes"]];
+  state.sessions.forEach(s=>{
+    const d=new Date(s.startedAt), sub=subjectById(s.subjectId);
+    rows.push([d.toLocaleDateString(),sub?.name||"",fmtClock(s.startedAt),fmtClock(s.endedAt),Math.round(s.studyMs/60000),Math.round(s.breakMs/60000)]);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="studyflow_sessions.csv"; a.click(); URL.revokeObjectURL(a.href);
+};
+window.addEventListener("beforeunload",()=>{
+  if(state.active){
+    const now=Date.now();
+    if(state.active.status==="running") state.active.studyMs += Math.max(0,now-state.active.lastTs);
+    else state.active.breakMs += Math.max(0,now-state.active.lastTs);
+    state.active.lastTs=now; saveState();
+  }
+});
+render(); startTicker();
+</script>
+</body>
+</html>
