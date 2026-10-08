@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="StudyFlow" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <title>StudyFlow Cloud</title>
+  <style>
+    :root{
+      --bg:#0b1020;--panel:#111a2e;--panel2:#17223b;--text:#f7f9ff;--muted:#9aa7bd;
+      --accent:#7c8cff;--accent2:#8ef0c3;--danger:#ff718e;--warn:#ffd36e;--line:rgba(255,255,255,.09);
+      --good:#8ef0c3;--shadow:0 18px 50px rgba(0,0,0,.28)
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:
+      radial-gradient(circle at 8% 4%,rgba(124,140,255,.20),transparent 28%),
+      radial-gradient(circle at 95% 7%,rgba(142,240,195,.10),transparent 25%),var(--bg);
+      color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+    .shell{max-width:1160px;margin:0 auto;padding:22px 16px 70px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}
+    .brand h1{margin:0;font-size:clamp(29px,5vw,46px);letter-spacing:-1.6px}
+    .brand p{margin:5px 0 0;color:var(--muted);font-size:14px}
+    .righttop{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .pill{border:1px solid var(--line);background:rgba(255,255,255,.045);border-radius:999px;padding:9px 12px;color:var(--muted);font-size:12px}
+    .btn{border:0;border-radius:14px;padding:11px 15px;font-weight:800;color:var(--text);background:var(--panel2);min-height:44px}
+    .btn.primary{background:var(--accent);color:#fff}
+    .btn.break{background:var(--warn);color:#241e10}
+    .btn.stop,.btn.danger{background:var(--danger);color:#fff}
+    .btn.ghost{border:1px solid var(--line);background:transparent}
+    .btn.good{background:var(--accent2);color:#082218}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .card{border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));border-radius:24px;box-shadow:var(--shadow)}
+    .authwrap{max-width:460px;margin:56px auto 0;padding:24px}
+    .authwrap h2{margin:0 0 6px;font-size:25px}
+    .muted{color:var(--muted)}
+    .field{display:flex;flex-direction:column;gap:7px;margin:15px 0}
+    .field label{font-size:12px;color:var(--muted);font-weight:800}
+    .field input{width:100%;border:1px solid var(--line);background:#0a1222;color:var(--text);border-radius:14px;padding:13px 14px;outline:none;font-size:16px}
+    .field input:focus{border-color:var(--accent)}
+    .authactions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .msg{font-size:13px;line-height:1.45;margin-top:14px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.045);color:var(--muted)}
+    .msg.error{background:rgba(255,113,142,.11);color:#ffc4cf}
+    .msg.good{background:rgba(142,240,195,.10);color:#c8ffe8}
+    .setup{max-width:760px;margin:40px auto;padding:24px}
+    .setup code{background:#091020;border:1px solid var(--line);padding:2px 6px;border-radius:7px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:15px}
+    .summary{grid-column:span 4;padding:18px}
+    .summary .label{font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.08em}
+    .summary .value{font-size:30px;font-weight:900;letter-spacing:-1px;margin-top:6px}
+    .summary .sub{font-size:12px;color:var(--muted);margin-top:5px}
+    .active{grid-column:span 12;padding:21px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+    .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-weight:800}
+    .active-subject{font-size:23px;font-weight:900;margin-top:6px}
+    .status{display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--muted);font-size:13px;font-weight:700}
+    .dot{width:9px;height:9px;border-radius:99px;background:currentColor;box-shadow:0 0 0 5px rgba(255,255,255,.04)}
+    .timer{font-size:clamp(42px,8vw,70px);font-variant-numeric:tabular-nums;font-weight:950;letter-spacing:-3px}
+    .actions{display:flex;gap:9px;flex-wrap:wrap}
+    .section{grid-column:span 12;padding:20px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px;flex-wrap:wrap}
+    .section h2{margin:0;font-size:20px}
+    .subjects{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .subject{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:18px;padding:15px;display:flex;flex-direction:column;gap:13px;min-height:170px}
+    .subject.running{outline:2px solid var(--accent);background:rgba(124,140,255,.09)}
+    .subject-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .subject-name{font-weight:900;line-height:1.25}
+    .tiny{font-size:11px;color:var(--muted)}
+    .weekline{font-size:13px;color:var(--muted)}
+    .weekline strong{color:var(--text)}
+    .progress{height:8px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+    .progress span{display:block;height:100%;min-width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px}
+    .subject-bottom{margin-top:auto;display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .subject-actions{display:flex;gap:7px;align-items:center}
+    .iconbtn{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:12px;min-width:42px;min-height:42px}
+    .split{grid-column:span 12;display:grid;grid-template-columns:1.1fr .9fr;gap:15px}
+    .panel{padding:20px}
+    .tabs{display:flex;gap:7px;flex-wrap:wrap}
+    .tab{border:1px solid var(--line);background:transparent;color:var(--muted);padding:8px 11px;border-radius:999px}
+    .tab.active{background:var(--text);color:#091020;border-color:transparent;font-weight:900}
+    .breakdown{display:flex;flex-direction:column;gap:12px}
+    .brow{display:grid;grid-template-columns:minmax(130px,1fr) 2fr auto;gap:11px;align-items:center}
+    .bar{height:9px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+    .bar span{display:block;height:100%;background:var(--accent);border-radius:999px}
+    .brow strong{font-size:13px;font-variant-numeric:tabular-nums}
+    .history{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow:auto}
+    .history-item{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}
+    .history-main{display:flex;justify-content:space-between;gap:10px;font-weight:800}
+    .history-meta{display:flex;gap:11px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin-top:5px}
+    .empty{padding:24px;border:1px dashed var(--line);border-radius:15px;color:var(--muted);text-align:center}
+    .syncbar{grid-column:span 12;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:rgba(142,240,195,.06);font-size:12px;color:var(--muted)}
+    .syncbar strong{color:var(--good)}
+    .importbar{grid-column:span 12;padding:16px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;border:1px solid rgba(255,211,110,.25);background:rgba(255,211,110,.08);border-radius:18px}
+    .modalwrap{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+    .modalwrap.show{display:flex}
+    .modal{width:min(500px,100%);background:#10182a;border:1px solid var(--line);border-radius:22px;padding:21px;box-shadow:var(--shadow)}
+    .modal h3{margin:0 0 14px}
+    .modalactions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}
+    .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:90;max-width:min(560px,calc(100% - 28px));padding:11px 14px;border-radius:14px;background:#f7f9ff;color:#091020;font-weight:800;font-size:13px;box-shadow:var(--shadow);display:none}
+    .toast.show{display:block}
+    @media(max-width:850px){.summary{grid-column:span 12}.subjects{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}
+    @media(max-width:560px){.topbar{align-items:flex-start}.righttop{justify-content:flex-start}.subjects{grid-template-columns:1fr}.timer{font-size:48px}.brow{grid-template-columns:1fr auto}.brow .bar{grid-column:1/-1}.authwrap{margin-top:24px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <h1>StudyFlow</h1>
+      <p>Cloud sync • iPhone + Mac • breaks excluded automatically</p>
+    </div>
+    <div class="righttop">
+      <span class="pill" id="userPill">Not signed in</span>
+      <button class="btn ghost hidden" id="signOutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <section id="setupView" class="card setup hidden">
+    <h2>Connect StudyFlow to Supabase</h2>
+    <p class="muted">The app code is ready, but <code>config.js</code> still needs your Supabase Project URL and Publishable/anon key.</p>
+    <div class="msg">Open <b>README_SETUP.txt</b> from the downloaded folder and follow the 4 setup steps. Never put a service_role/secret key in this website.</div>
+  </section>
+
+  <section id="authView" class="card authwrap hidden">
+    <h2>StudyFlow Cloud Login</h2>
+    <p class="muted">Use the same account on iPhone and MacBook. Your subjects and study records will then be the same on both devices.</p>
+    <div class="field"><label>Email</label><input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="Minimum 6 characters"></div>
+    <div class="authactions">
+      <button class="btn primary" id="loginBtn">Sign in</button>
+      <button class="btn ghost" id="signupBtn">Create account</button>
+      <button class="btn ghost" id="forgotBtn">Forgot password?</button>
+    </div>
+    <div id="authMsg" class="msg">If Supabase email confirmation is enabled, confirm the email once before signing in.</div>
+  </section>
+
+  <main id="appView" class="grid hidden">
+    <div class="syncbar">
+      <span><strong>Cloud sync ON</strong> — same login = same data on every device.</span>
+      <span id="lastSync">Syncing…</span>
+    </div>
+
+    <div id="importBar" class="importbar hidden">
+      <div>
+        <b>Old StudyFlow data found on this device.</b>
+        <div class="muted" style="font-size:12px;margin-top:4px">Import the old local sessions into your cloud account once.</div>
+      </div>
+      <button class="btn good" id="importBtn">Import old data</button>
+    </div>
+
+    <div class="card summary"><div class="label">TODAY</div><div class="value" id="todayTotal">0h 00m</div><div class="sub">Focused study time</div></div>
+    <div class="card summary"><div class="label">THIS WEEK</div><div class="value" id="weekTotal">0h 00m</div><div class="sub">Monday → Sunday</div></div>
+    <div class="card summary"><div class="label">THIS MONTH</div><div class="value" id="monthTotal">0h 00m</div><div class="sub">All completed + current session</div></div>
+
+    <section class="card active">
+      <div>
+        <div class="kicker">Current session</div>
+        <div class="active-subject" id="activeSubject">No active study session</div>
+        <div class="status" id="statusLine"><span class="dot"></span><span>Choose a subject and press Start</span></div>
+      </div>
+      <div class="timer" id="timer">00:00:00</div>
+      <div class="actions">
+        <button class="btn break" id="pauseBtn" disabled>Break</button>
+        <button class="btn primary hidden" id="resumeBtn">Resume</button>
+        <button class="btn stop" id="stopBtn" disabled>Stop & Save</button>
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="section-head">
+        <div>
+          <h2>Subjects</h2>
+          <div class="muted" style="font-size:12px">Weekly goal is a minimum, never a maximum. Extra study time keeps counting.</div>
+        </div>
+        <button class="btn ghost" id="addSubjectBtn">+ Add subject</button>
+      </div>
+      <div class="subjects" id="subjectsGrid"></div>
+    </section>
+
+    <div class="split">
+      <section class="card panel">
+        <div class="section-head">
+          <div><h2>Subject breakdown</h2><div class="muted" style="font-size:12px">Break time is not included.</div></div>
+          <div class="tabs">
+            <button class="tab active" data-range="week">Week</button>
+            <button class="tab" data-range="month">Month</button>
+            <button class="tab" data-range="all">All</button>
+          </div>
+        </div>
+        <div class="breakdown" id="breakdown"></div>
+      </section>
+
+      <section class="card panel">
+        <div class="section-head">
+          <div><h2>Recent sessions</h2><div class="muted" style="font-size:12px">Saved in Supabase automatically.</div></div>
+        </div>
+        <div class="history" id="history"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button class="btn ghost" id="exportBtn">Export CSV</button>
+          <button class="btn ghost" id="refreshBtn">Sync now</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="modalwrap" id="subjectModal">
+  <div class="modal">
+    <h3>Add subject</h3>
+    <div class="field"><label>Subject / course name</label><input id="subjectNameInput" maxlength="80" placeholder="e.g. German Language"></div>
+    <div class="field"><label>Minimum weekly goal (hours)</label><input id="subjectGoalInput" type="number" min="0" step="0.5" placeholder="e.g. 3"></div>
+    <div class="msg">This is only a minimum goal. There is no maximum limit.</div>
+    <div class="modalactions"><button class="btn ghost" data-close="subjectModal">Cancel</button><button class="btn primary" id="saveSubjectBtn">Add</button></div>
+  </div>
+</div>
+
+<div class="modalwrap" id="editModal">
+  <div class="modal">
+    <h3>Edit subject</h3>
+    <div class="field"><label>Subject name</label><input id="editNameInput" maxlength="80"></div>
+    <div class="field"><label>Minimum weekly goal (hours)</label><input id="editGoalInput" type="number" min="0" step="0.5"></div>
+    <div class="modalactions"><button class="btn ghost" data-close="editModal">Cancel</button><button class="btn primary" id="saveEditBtn">Save</button></div>
+  </div>
+</div>
+
+
+<div class="modalwrap" id="passwordModal">
+  <div class="modal">
+    <h3>Set a new password</h3>
+    <div class="field">
+      <label>New password</label>
+      <input id="newPasswordInput" type="password" minlength="6" autocomplete="new-password" placeholder="At least 6 characters">
+    </div>
+    <div class="field">
+      <label>Confirm new password</label>
+      <input id="confirmPasswordInput" type="password" minlength="6" autocomplete="new-password" placeholder="Type it again">
+    </div>
+    <div class="msg">After you open the reset link from your email, set your new password here.</div>
+    <div class="modalactions">
+      <button class="btn primary" id="savePasswordBtn">Update password</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+  const CFG = window.STUDYFLOW_CONFIG || {};
+  const configured = CFG.supabaseUrl && CFG.supabaseAnonKey &&
+    !CFG.supabaseUrl.includes("PASTE_") && !CFG.supabaseAnonKey.includes("PASTE_");
+
+  const $ = id => document.getElementById(id);
+  const setupView=$("setupView"), authView=$("authView"), appView=$("appView");
+  if(!configured){ setupView.classList.remove("hidden"); return; }
+
+  const client = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  });
+
+  let currentUser=null, subjects=[], sessions=[], active=null, selectedRange="week", ticker=null, editingId=null;
+  let channel=null, syncTimer=null;
+
+  function showToast(msg, ms=2600){
+    const t=$("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),ms);
+  }
+  function showAuthMsg(msg,type=""){ const x=$("authMsg"); x.textContent=msg; x.className="msg"+(type?" "+type:""); }
+  function fmt(ms,seconds=false){
+    const total=Math.max(0,Math.floor(Number(ms||0)/1000)), h=Math.floor(total/3600), m=Math.floor((total%3600)/60), s=total%60;
+    if(seconds) return [h,m,s].map(v=>String(v).padStart(2,"0")).join(":");
+    return `${h}h ${String(m).padStart(2,"0")}m`;
+  }
+  const msFrom = iso => iso ? new Date(iso).getTime() : 0;
+  function dayStart(d=new Date()){const x=new Date(d);x.setHours(0,0,0,0);return x.getTime()}
+  function weekStart(d=new Date()){const x=new Date(d);x.setHours(0,0,0,0);const n=(x.getDay()+6)%7;x.setDate(x.getDate()-n);return x.getTime()}
+  function monthStart(d=new Date()){return new Date(d.getFullYear(),d.getMonth(),1).getTime()}
+  function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+  function activeStudyMs(a=active){
+    if(!a) return 0;
+    let n=Number(a.study_ms||0);
+    if(a.status==="running") n += Math.max(0,Date.now()-msFrom(a.last_changed_at));
+    return n;
+  }
+  function activeBreakMs(a=active){
+    if(!a) return 0;
+    let n=Number(a.break_ms||0);
+    if(a.status==="paused") n += Math.max(0,Date.now()-msFrom(a.last_changed_at));
+    return n;
+  }
+  function completed(){ return sessions.filter(s=>s.status==="completed" && s.ended_at); }
+  function inRange(s,range){
+    if(range==="all") return true;
+    const t=msFrom(s.ended_at||s.started_at), start=range==="week"?weekStart():monthStart();
+    return t>=start;
+  }
+  function sumRange(start){
+    let n=completed().filter(s=>msFrom(s.ended_at)>=start).reduce((a,s)=>a+Number(s.study_ms||0),0);
+    if(active && msFrom(active.started_at)>=start) n+=activeStudyMs();
+    return n;
+  }
+  function subjectWeekMs(sub){
+    let n=completed().filter(s=>s.subject_name===sub.name && msFrom(s.ended_at)>=weekStart()).reduce((a,s)=>a+Number(s.study_ms||0),0);
+    if(active && active.subject_id===sub.id) n+=activeStudyMs();
+    return n;
+  }
+
+  async function seedIfNeeded(){
+    const {count,error}=await client.from("subjects").select("*",{count:"exact",head:true});
+    if(error) throw error;
+    if(count===0){ const {error:e}=await client.rpc("seed_default_subjects"); if(e) throw e; }
+  }
+  async function loadAll(silent=false){
+    if(!currentUser) return;
+    try{
+      const [subRes,sesRes]=await Promise.all([
+        client.from("subjects").select("*").eq("archived",false).order("created_at",{ascending:true}),
+        client.from("sessions").select("*").order("started_at",{ascending:false}).limit(5000)
+      ]);
+      if(subRes.error) throw subRes.error;
+      if(sesRes.error) throw sesRes.error;
+      subjects=subRes.data||[]; sessions=sesRes.data||[];
+      active=sessions.find(s=>s.status==="running"||s.status==="paused")||null;
+      render();
+      $("lastSync").textContent="Last sync "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+      if(!silent) showToast("Synced");
+    }catch(e){ console.error(e); if(!silent) showToast("Sync failed: "+e.message,4200); }
+  }
+  async function startSubject(id){
+    if(active) return showToast("Stop the current session first.");
+    const {error}=await client.rpc("start_study",{p_subject_id:id});
+    if(error){ showToast(error.message,4200); return loadAll(true); }
+    await loadAll(true);
+  }
+  async function pauseSession(){
+    const {error}=await client.rpc("pause_study");
+    if(error) return showToast(error.message,4200);
+    await loadAll(true);
+  }
+  async function resumeSession(){
+    const {error}=await client.rpc("resume_study");
+    if(error) return showToast(error.message,4200);
+    await loadAll(true);
+  }
+  async function stopSession(){
+    const {error}=await client.rpc("stop_study");
+    if(error) return showToast(error.message,4200);
+    await loadAll(true); showToast("Session saved to cloud");
+  }
+  async function addSubject(){
+    const name=$("subjectNameInput").value.trim(), goal=Math.max(0,Number($("subjectGoalInput").value)||0);
+    if(!name) return showToast("Enter a subject name.");
+    const {error}=await client.from("subjects").insert({user_id:currentUser.id,name,min_weekly_hours:goal});
+    if(error) return showToast(error.message,4200);
+    $("subjectNameInput").value="";$("subjectGoalInput").value="";closeModal("subjectModal");await loadAll(true);
+  }
+  async function saveEdit(){
+    if(!editingId) return;
+    const name=$("editNameInput").value.trim(), goal=Math.max(0,Number($("editGoalInput").value)||0);
+    if(!name) return showToast("Enter a subject name.");
+    const {error}=await client.from("subjects").update({name,min_weekly_hours:goal}).eq("id",editingId);
+    if(error) return showToast(error.message,4200);
+    closeModal("editModal"); editingId=null; await loadAll(true);
+  }
+  async function archiveSubject(id){
+    if(active?.subject_id===id) return showToast("Stop this subject first.");
+    const sub=subjects.find(s=>s.id===id); if(!sub) return;
+    if(!confirm(`Delete "${sub.name}" from your subject list?\n\nOld study history will stay saved.`)) return;
+    const {error}=await client.from("subjects").update({archived:true}).eq("id",id);
+    if(error) return showToast(error.message,4200);
+    await loadAll(true);
+  }
+
+  function render(){
+    $("userPill").textContent=currentUser?.email||"Signed in";
+    $("todayTotal").textContent=fmt(sumRange(dayStart()));
+    $("weekTotal").textContent=fmt(sumRange(weekStart()));
+    $("monthTotal").textContent=fmt(sumRange(monthStart()));
+
+    const status=$("statusLine"), pause=$("pauseBtn"), resume=$("resumeBtn"), stop=$("stopBtn");
+    if(active){
+      $("activeSubject").textContent=active.subject_name;
+      $("timer").textContent=fmt(activeStudyMs(),true);
+      if(active.status==="running"){
+        status.style.color="var(--good)";status.querySelector("span:last-child").textContent="Studying — synced to cloud";
+        pause.disabled=false;pause.classList.remove("hidden");resume.classList.add("hidden");stop.disabled=false;
+      }else{
+        status.style.color="var(--warn)";status.querySelector("span:last-child").textContent=`On break — ${fmt(activeBreakMs(),true)} break`;
+        pause.classList.add("hidden");resume.classList.remove("hidden");stop.disabled=false;
+      }
+    }else{
+      $("activeSubject").textContent="No active study session";$("timer").textContent="00:00:00";
+      status.style.color="var(--muted)";status.querySelector("span:last-child").textContent="Choose a subject and press Start";
+      pause.disabled=true;pause.classList.remove("hidden");resume.classList.add("hidden");stop.disabled=true;
+    }
+
+    const grid=$("subjectsGrid");grid.innerHTML="";
+    if(!subjects.length){grid.innerHTML='<div class="empty">No active subjects. Add one with “+ Add subject”.</div>'}
+    subjects.forEach(s=>{
+      const w=subjectWeekMs(s), goal=Number(s.min_weekly_hours||0), goalMs=goal*3600000;
+      const pct=goalMs?Math.round(w/goalMs*100):0, bar=goalMs?Math.min(100,pct):0;
+      const card=document.createElement("div");card.className="subject"+(active?.subject_id===s.id?" running":"");
+      card.innerHTML=`
+        <div class="subject-top">
+          <div class="subject-name">${esc(s.name)}</div>
+          <div class="tiny">${goal?`Min ${goal}h/wk`:"No minimum"}</div>
+        </div>
+        <div class="weekline">This week: <strong>${fmt(w)}</strong>${goal?` • ${pct}% of minimum`:""}</div>
+        <div class="progress"><span style="width:${bar}%"></span></div>
+        <div class="tiny">${goal && w>goalMs ? `+${fmt(w-goalMs)} above minimum` : goal ? `${fmt(Math.max(0,goalMs-w))} to minimum` : "Study as much as you want"}</div>
+        <div class="subject-bottom">
+          <div class="subject-actions">
+            <button class="iconbtn edit-btn" data-id="${s.id}" title="Edit">✎</button>
+            <button class="iconbtn delete-btn" data-id="${s.id}" title="Delete">×</button>
+          </div>
+          <button class="btn primary start-btn" data-id="${s.id}" ${active && active.subject_id!==s.id?"disabled":""}>
+            ${active?.subject_id===s.id?(active.status==="paused"?"Resume":"Running"):"Start"}
+          </button>
+        </div>`;
+      grid.appendChild(card);
+    });
+    renderBreakdown();renderHistory();
+  }
+
+  function renderBreakdown(){
+    const map=new Map();
+    completed().filter(s=>inRange(s,selectedRange)).forEach(s=>map.set(s.subject_name,(map.get(s.subject_name)||0)+Number(s.study_ms||0)));
+    if(active){
+      const start=selectedRange==="all"?0:selectedRange==="week"?weekStart():monthStart();
+      if(msFrom(active.started_at)>=start) map.set(active.subject_name,(map.get(active.subject_name)||0)+activeStudyMs());
+    }
+    const vals=[...map.entries()].sort((a,b)=>b[1]-a[1]), wrap=$("breakdown");
+    if(!vals.length){wrap.innerHTML='<div class="empty">No study time in this range yet.</div>';return}
+    const max=Math.max(...vals.map(v=>v[1]),1);
+    wrap.innerHTML=vals.map(([name,ms])=>`<div class="brow"><div style="font-size:13px;font-weight:800">${esc(name)}</div><div class="bar"><span style="width:${Math.round(ms/max*100)}%"></span></div><strong>${fmt(ms)}</strong></div>`).join("");
+  }
+  function renderHistory(){
+    const list=completed().slice(0,15), wrap=$("history");
+    if(!list.length){wrap.innerHTML='<div class="empty">Completed sessions will appear here.</div>';return}
+    wrap.innerHTML=list.map(s=>{
+      const d=new Date(s.started_at), e=new Date(s.ended_at);
+      return `<div class="history-item"><div class="history-main"><span>${esc(s.subject_name)}</span><span>${fmt(s.study_ms)}</span></div>
+      <div class="history-meta"><span>${d.toLocaleDateString()}</span><span>${d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}–${e.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span><span>Break ${fmt(s.break_ms)}</span></div></div>`;
+    }).join("");
+  }
+
+  function openModal(id){$(id).classList.add("show")}
+  function closeModal(id){$(id).classList.remove("show")}
+
+  async function importOldData(){
+    let old;
+    try{old=JSON.parse(localStorage.getItem("studyflow_v1")||"null")}catch(e){}
+    if(!old) return showToast("No old local data found.");
+    $("importBtn").disabled=true;$("importBtn").textContent="Importing…";
+    try{
+      const allExisting=(await client.from("subjects").select("*")).data||[];
+      const byName=new Map(allExisting.map(s=>[s.name.trim().toLowerCase(),s]));
+      const localSubs=Array.isArray(old.subjects)?old.subjects:[];
+      const idMap=new Map();
+      for(const ls of localSubs){
+        const key=String(ls.name||"").trim().toLowerCase(); if(!key) continue;
+        let cloud=byName.get(key);
+        if(!cloud){
+          const {data,error}=await client.from("subjects").insert({
+            user_id:currentUser.id,name:ls.name,min_weekly_hours:Math.max(0,Number(ls.target)||0)
+          }).select().single();
+          if(error) throw error; cloud=data; byName.set(key,cloud);
+        }
+        idMap.set(ls.id,cloud);
+      }
+      const rows=[];
+      for(const s of (old.sessions||[])){
+        const sub=idMap.get(s.subjectId); if(!sub || !s.startedAt || !s.endedAt) continue;
+        rows.push({
+          user_id:currentUser.id, subject_id:sub.id, subject_name:sub.name,
+          started_at:new Date(s.startedAt).toISOString(), ended_at:new Date(s.endedAt).toISOString(),
+          study_ms:Math.max(0,Math.round(Number(s.studyMs)||0)),
+          break_ms:Math.max(0,Math.round(Number(s.breakMs)||0)),
+          status:"completed", last_changed_at:new Date(s.endedAt).toISOString()
+        });
+      }
+      for(let i=0;i<rows.length;i+=100){
+        const {error}=await client.from("sessions").insert(rows.slice(i,i+100)); if(error) throw error;
+      }
+      localStorage.setItem("studyflow_cloud_imported_v1","1");
+      $("importBar").classList.add("hidden");
+      await loadAll(true);
+      showToast(`Imported ${rows.length} old sessions to cloud`,4200);
+    }catch(e){showToast("Import failed: "+e.message,5000)}
+    finally{$("importBtn").disabled=false;$("importBtn").textContent="Import old data"}
+  }
+  function checkOldImport(){
+    const has=localStorage.getItem("studyflow_v1"), done=localStorage.getItem("studyflow_cloud_imported_v1");
+    $("importBar").classList.toggle("hidden",!(has && !done));
+  }
+
+  async function enterApp(user){
+    if(currentUser?.id===user.id && !appView.classList.contains("hidden")){ await loadAll(true); return; }
+    currentUser=user;
+    authView.classList.add("hidden");appView.classList.remove("hidden");$("signOutBtn").classList.remove("hidden");
+    $("userPill").textContent=user.email||"Signed in";
+    try{await seedIfNeeded();await loadAll(true)}catch(e){showToast(e.message,5000)}
+    checkOldImport();
+    clearInterval(ticker);ticker=setInterval(()=>{if(active){$("timer").textContent=fmt(activeStudyMs(),true);if(active.status==="paused")$("statusLine").querySelector("span:last-child").textContent=`On break — ${fmt(activeBreakMs(),true)} break`;renderBreakdown()}},1000);
+    clearInterval(syncTimer);syncTimer=setInterval(()=>loadAll(true),30000);
+    window.addEventListener("focus",()=>loadAll(true),{passive:true});
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadAll(true)},{passive:true});
+    if(channel) client.removeChannel(channel);
+    channel=client.channel("studyflow-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"sessions",filter:`user_id=eq.${user.id}`},()=>loadAll(true))
+      .on("postgres_changes",{event:"*",schema:"public",table:"subjects",filter:`user_id=eq.${user.id}`},()=>loadAll(true))
+      .subscribe();
+  }
+  function leaveApp(){
+    currentUser=null;subjects=[];sessions=[];active=null;
+    appView.classList.add("hidden");authView.classList.remove("hidden");$("signOutBtn").classList.add("hidden");$("userPill").textContent="Not signed in";
+    clearInterval(ticker);clearInterval(syncTimer);if(channel){client.removeChannel(channel);channel=null}
+  }
+
+  $("loginBtn").onclick=async()=>{
+    const email=$("emailInput").value.trim(),password=$("passwordInput").value;
+    if(!email||!password) return showAuthMsg("Enter email and password.","error");
+    showAuthMsg("Signing in…");
+    const {error}=await client.auth.signInWithPassword({email,password});
+    if(error) showAuthMsg(error.message,"error");
+  };
+  $("forgotBtn").onclick=async()=>{
+    const email=$("emailInput").value.trim();
+    if(!email) return showAuthMsg("Enter your email address first, then tap Forgot password?","error");
+    showAuthMsg("Sending password reset email…");
+    const redirectTo=new URL("./",window.location.href).href;
+    const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo});
+    if(error) return showAuthMsg(error.message,"error");
+    showAuthMsg("Password reset email sent. Open the email and tap the reset link.","good");
+  };
+
+  $("signupBtn").onclick=async()=>{
+    const email=$("emailInput").value.trim(),password=$("passwordInput").value;
+    if(!email||password.length<6) return showAuthMsg("Enter a valid email and a password of at least 6 characters.","error");
+    showAuthMsg("Creating account…");
+    const {data,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
+    if(error) return showAuthMsg(error.message,"error");
+    if(data.session) showAuthMsg("Account created and signed in.","good");
+    else showAuthMsg("Account created. Check your email confirmation link, then sign in.","good");
+  };
+  $("savePasswordBtn").onclick=async()=>{
+    const p1=$("newPasswordInput").value;
+    const p2=$("confirmPasswordInput").value;
+    if(p1.length<6) return showToast("Password must be at least 6 characters.",4200);
+    if(p1!==p2) return showToast("Passwords do not match.",4200);
+    const {error}=await client.auth.updateUser({password:p1});
+    if(error) return showToast("Password update failed: "+error.message,5000);
+    $("newPasswordInput").value="";
+    $("confirmPasswordInput").value="";
+    closeModal("passwordModal");
+    showToast("Password updated successfully",4200);
+  };
+
+  $("signOutBtn").onclick=()=>client.auth.signOut();
+  $("pauseBtn").onclick=pauseSession;$("resumeBtn").onclick=resumeSession;$("stopBtn").onclick=stopSession;
+  $("addSubjectBtn").onclick=()=>openModal("subjectModal");$("saveSubjectBtn").onclick=addSubject;$("saveEditBtn").onclick=saveEdit;
+  $("refreshBtn").onclick=()=>loadAll(false);$("importBtn").onclick=importOldData;
+  document.addEventListener("click",e=>{
+    const close=e.target.closest("[data-close]");if(close)closeModal(close.dataset.close);
+    const start=e.target.closest(".start-btn");if(start&&!start.disabled){const id=start.dataset.id;if(active?.subject_id===id&&active.status==="paused")resumeSession();else if(!active)startSubject(id)}
+    const del=e.target.closest(".delete-btn");if(del)archiveSubject(del.dataset.id);
+    const edit=e.target.closest(".edit-btn");if(edit){const s=subjects.find(x=>x.id===edit.dataset.id);if(s){editingId=s.id;$("editNameInput").value=s.name;$("editGoalInput").value=Number(s.min_weekly_hours||0);openModal("editModal")}}
+    const tab=e.target.closest(".tab");if(tab){selectedRange=tab.dataset.range;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===tab));renderBreakdown()}
+  });
+  $("exportBtn").onclick=()=>{
+    const rows=[["Date","Subject","Start","End","Study Minutes","Break Minutes"]];
+    completed().forEach(s=>{const d=new Date(s.started_at),e=new Date(s.ended_at);rows.push([d.toLocaleDateString(),s.subject_name,d.toLocaleTimeString(),e.toLocaleTimeString(),Math.round(Number(s.study_ms||0)/60000),Math.round(Number(s.break_ms||0)/60000)])});
+    const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="studyflow-cloud-sessions.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)
+  };
+
+  client.auth.onAuthStateChange((event,session)=>{
+    if(event==="PASSWORD_RECOVERY" && session?.user){
+      enterApp(session.user).then(()=>openModal("passwordModal"));
+      return;
+    }
+    if(session?.user) enterApp(session.user);
+    else leaveApp();
+  });
+  client.auth.getSession().then(({data})=>{if(data.session?.user)enterApp(data.session.user);else leaveApp()});
+
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+})();
+</script>
+</body>
+</html>
